@@ -28,8 +28,8 @@ contract Exc is IExc{
     //token to a side, to an order
     mapping(bytes32 => mapping(uint => Order[])) public orderbook;
     //ids of next trades and orders
-    uint nextTradeID
-    uint nextOrderID
+    uint nextTradeID;
+    uint nextOrderID;
     
     
     /// @notice an event representing all the needed info regarding a new trade on the exchange
@@ -67,9 +67,9 @@ contract Exc is IExc{
       returns(Token[] memory) {
           ar rTokens = Token[];
           for(uint i=0; i<tokenList.length; i++) {
-              bytes32 b = tokenList[i]
-              Token tk = tokens[b]
-              rTokens.push(tk)
+              bytes32 b = tokenList[i];
+              Token tk = tokens[b];
+              rTokens.push(tk);
           }
         return rTokens
     }
@@ -133,6 +133,10 @@ contract Exc is IExc{
             }
             require(tokenList.contains(ticker) && ticker != "PIN")
             Order lmo = Order(nextOrderID, msg.sender, side, ticker, amount, 0, price, now)
+            orderbook.sorting
+            for(uint i=0; i<orderbook.length; i++) {
+                
+            }
             
     }
     

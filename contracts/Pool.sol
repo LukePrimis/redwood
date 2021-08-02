@@ -22,6 +22,11 @@ contract Pool {
     //whichP => which is pine
     function initialize(address _token0, address _token1, address _dex, uint whichP, bytes32 _tickerQ, bytes32 _tickerT)
     external {
+        this.tokenP = _token0
+        this.token1 = token1
+        this.dex = dex
+        this.tokenPT = _tickerQ
+        this.token1T = _tickerT
     }
     
     // todo: implement wallet functionality and trading functionality
