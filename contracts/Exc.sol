@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 
 // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/solc-0.6/contracts/token/ERC20/IERC20.sol";
 // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/solc-0.6/contracts/math/SafeMath.sol";
-import '../contracts/libraries/token/ERC20/ERC20.sol';
+import '../contracts/libraries/token/ERC20/IERC20.sol';
 import '../contracts/libraries/math/SafeMath.sol';
 import "./IExc.sol";
 
@@ -21,10 +21,10 @@ contract Exc is IExc{
     /// interface for more details about orders and sides.
     mapping(bytes32 => Token) public tokens;
     bytes32[] public tokenList;
-    address private factory;
+    // address private factory;
     bytes32 constant PIN = bytes32('PIN');
     //trader, token to the amount
-    mapping(address => mapping(bytes32 => uint)) public balances;
+    // mapping(address => mapping(bytes32 => uint)) public balances;
     //token to a side, to an order
     mapping(bytes32 => mapping(uint => Order[])) public orderbook;
     //ids of next trades and orders
@@ -47,12 +47,6 @@ contract Exc is IExc{
         uint price,
         uint date
     );
-    
-    /// @notice a constructor for this smart contract, used during deployment. No need to edit
-    /// @param fac the address of the factory contract
-    constructor(address fac) public {
-        factory = fac;
-    }
     
     // todo: implement getOrders, which simply returns the orders for a specific token on a specific side
     function getOrders(
@@ -97,8 +91,8 @@ contract Exc is IExc{
         external {
             Token memory tk = tokens[ticker];
             IERC20(tk.tokenAddress).transferFrom(msg.sender, address(this), amount);
-            balances[address(this)][ticker] += amount;
-            balances[msg.sender][ticker] -= amount;
+            traderBalances[address(this)][ticker] += amount;
+            traderBalances[msg.sender][ticker] -= amount;
         }
     
     // todo: implement withdraw, which should do the opposite of deposit. The trader should not be able to withdraw more than
@@ -107,11 +101,11 @@ contract Exc is IExc{
         uint amount,
         bytes32 ticker)
         external {
-            require(balances[address(this)][ticker] >= amount);
+            require(traderBalances[address(this)][ticker] >= amount);
             Token memory tk = tokens[ticker];
-            IERC20(tk.tokenAddress).transferFrom(address(this), msg.sender, amount);
-            balances[address(this)][ticker] -= amount;
-            balances[msg.sender][ticker] += amount;
+            IERC20(tk.tokenAddress).transfer(msg.sender, amount);
+            traderBalances[address(this)][ticker] -= amount;
+            traderBalances[msg.sender][ticker] += amount;
     }
     
     // todo: implement makeLimitOrder, which creates a limit order based on the parameters provided. This method should only be
@@ -128,11 +122,11 @@ contract Exc is IExc{
         external {
             //ask abt how side works in makeLimitOrder
             if(side == Side.SELL) {
-                require(balances[msg.sender][ticker] >= amount);
+                require(traderBalances[msg.sender][ticker] >= amount);
             } else {
                 //require(balances[msg.sender][PIN] >= amount)
                 //converting amount to pine
-                require(balances[msg.sender]["PIN"] >= amount.mul(price));
+                require(traderBalances[msg.sender]["PIN"] >= amount.mul(price));
             }
             bool tickerFound = false;
             for (uint i = 0; i < tokenList.length && !tickerFound; i++) {
