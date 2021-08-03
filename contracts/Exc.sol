@@ -31,6 +31,10 @@ contract Exc is IExc{
     uint nextTradeID;
     uint nextOrderID;
     
+    /// @notice, this is the more standardized form of the main wallet data structure, if you're using something a bit
+    /// different, implementing a function that just takes in the address of the trader and then the ticker of a
+    /// token instead would suffice
+    mapping(address => mapping(bytes32 => uint)) public traderBalances;
     
     /// @notice an event representing all the needed info regarding a new trade on the exchange
     event NewTrade(

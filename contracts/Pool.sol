@@ -33,4 +33,14 @@ contract Pool {
     // deposit and withdraw
     // look at prices of tokens in pool (changes as people come in and out)
     // everytime price changes we have to adjust limit orders for the change in price (helper)
+    
+    // todo: implement withdraw and deposit functions so that a single deposit and a single withdraw can unstake
+    // both tokens at the same time
+    function deposit(uint tokenAmount, uint pineAmount){
+
+    }
+
+    function withdraw(uint tokenAmount, uint pineAmount){
+
+    }
 }
