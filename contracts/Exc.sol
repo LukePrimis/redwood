@@ -57,7 +57,7 @@ contract Exc is IExc{
       external 
       view
       returns(Order[] memory) {
-          return orderbook[ticker][side.uint];
+          return orderbook[ticker][uint(side)];
     }
 
     // todo: implement getTokens, which simply returns an array of the tokens currently traded on in the exchange
@@ -65,13 +65,12 @@ contract Exc is IExc{
       external 
       view 
       returns(Token[] memory) {
-          ar rTokens = Token[];
+          Token[] memory rTokens =  new Token[](tokenList.length);
           for(uint i=0; i<tokenList.length; i++) {
               bytes32 b = tokenList[i];
-              Token tk = tokens[b];
-              rTokens.push(tk);
+              rTokens[i] = tokens[b];
           }
-        return rTokens
+        return rTokens;
     }
     
     // todo: implement addToken, which should add the token desired to the exchange by interacting with tokenList and tokens
@@ -80,9 +79,9 @@ contract Exc is IExc{
         address tokenAddress)
         external {
             //TODO: check if it already contains?
-            Token tk = Token(ticker, tokenAddress)
-            tokenList.push(ticker)
-            tokens.add(ticker, tk)
+            Token memory tk = Token(ticker, tokenAddress);
+            tokenList.push(ticker);
+            tokens[ticker] = tk;
     }
     
     // todo: implement deposit, which should deposit a certain amount of tokens from a trader to their on-exchange wallet,
@@ -92,10 +91,10 @@ contract Exc is IExc{
         uint amount,
         bytes32 ticker)
         external {
-            Token tk = tokens[ticker]
-            IERC20(tk.tokenAddress).transferFrom(msg.sender, address(this), amount)
-            balances[address(this)][ticker] += amount
-            balances[msg.sender][ticker] -= amount
+            Token memory tk = tokens[ticker];
+            IERC20(tk.tokenAddress).transferFrom(msg.sender, address(this), amount);
+            balances[address(this)][ticker] += amount;
+            balances[msg.sender][ticker] -= amount;
         }
     
     // todo: implement withdraw, which should do the opposite of deposit. The trader should not be able to withdraw more than
@@ -104,11 +103,11 @@ contract Exc is IExc{
         uint amount,
         bytes32 ticker)
         external {
-            require(balances[address(this)][ticker] >= amount)
-            Token tk = tokens[ticker]
-            IERC20(tk.tokenAddress).transferFrom(address(this), msg.sender, amount)
-            balances[address(this)][ticker] -= amount
-            balances[msg.sender][ticker] += amount
+            require(balances[address(this)][ticker] >= amount);
+            Token memory tk = tokens[ticker];
+            IERC20(tk.tokenAddress).transferFrom(address(this), msg.sender, amount);
+            balances[address(this)][ticker] -= amount;
+            balances[msg.sender][ticker] += amount;
     }
     
     // todo: implement makeLimitOrder, which creates a limit order based on the parameters provided. This method should only be
@@ -124,20 +123,24 @@ contract Exc is IExc{
         Side side)
         external {
             //ask abt how side works in makeLimitOrder
-            if(side == SELL) {
-            require(balances[msg.sender][ticker] >= amount)
+            if(side == Side.SELL) {
+                require(balances[msg.sender][ticker] >= amount);
             } else {
                 //require(balances[msg.sender][PIN] >= amount)
                 //converting amount to pine
-                require(balances[msg.sender]["PIN"] >= amount.mul(price))
+                require(balances[msg.sender]["PIN"] >= amount.mul(price));
             }
-            require(tokenList.contains(ticker) && ticker != "PIN")
-            Order lmo = Order(nextOrderID, msg.sender, side, ticker, amount, 0, price, now)
-            orderbook.sorting
-            for(uint i=0; i<orderbook.length; i++) {
-                
+            bool tickerFound = false;
+            for (uint i = 0; i < tokenList.length && !tickerFound; i++) {
+                if (tokenList[i] == ticker) {
+                    tickerFound = true;
+                }
             }
             
+            require(tickerFound && ticker != "PIN", "Tokenlist didn't have ticker or token was PIN");
+            Order memory lmo = Order(nextOrderID, msg.sender, side, ticker, amount, 0, price, now);
+            orderbook[ticker][uint(side)].push(lmo);
+            quicksort(orderbook[ticker][uint(side)], 0, uint32(orderbook[ticker][uint(side)].length - 1));
     }
     
     // todo: implement deleteLimitOrder, which will delete a limit order from the orderBook as long as the same trader is deleting
@@ -146,6 +149,20 @@ contract Exc is IExc{
         uint id,
         bytes32 ticker,
         Side side) external returns (bool) {
+            // todo do we need to check this shit
+            // require(side == Side.SELL || side == Side.BUY, "Side was not BUY or SELL");
+            // require()
+            uint length = orderbook[ticker][uint(side)].length;
+            for (uint i = 0; i < length; i++) {
+                if (orderbook[ticker][uint(side)][i].id == id) {
+                    require(msg.sender == orderbook[ticker][uint(side)][i].trader, "deleter was not trader");
+                    orderbook[ticker][uint(side)][i] = orderbook[ticker][uint(side)][length - 1];
+                    orderbook[ticker][uint(side)].pop();
+                    quicksort(orderbook[ticker][uint(side)], 0, uint32(length - 1));
+                    return true;
+                }
+            }
+            return false;
     }
     
     // todo: implement makeMarketOrder, which will execute a market order on the current orderbook. The market order need not be
@@ -163,5 +180,28 @@ contract Exc is IExc{
     }
     
     //todo: add modifiers for methods as detailed in handout
-
+    
+    // do we need to use memory?
+    function quicksort(Order[] memory arr, uint32 left, uint32 right) internal {
+        uint32 pivot = left + ((right - left) / 2);
+        uint32 sortedPivotIndex = 0;
+        (arr[pivot], arr[right]) = (arr[right], arr[pivot]);
+        bool pivotSet = false;
+        while (!pivotSet) {
+            uint32 itemFromLeft = left;
+            while (arr[itemFromLeft].price < arr[right].price) itemFromLeft++;
+            uint32 itemFromRight = right;
+            while (arr[itemFromRight].price > arr[right].price) itemFromLeft--;
+            if (itemFromRight < itemFromLeft) {
+                (arr[itemFromLeft], arr[right]) = (arr[right], arr[itemFromLeft]);
+                sortedPivotIndex = itemFromLeft;
+                pivotSet = true;
+            }
+            else {
+                (arr[itemFromLeft], arr[itemFromRight]) = (arr[itemFromRight], arr[itemFromLeft]);
+            }
+        }
+        quicksort(arr, left, sortedPivotIndex - 1);
+        quicksort(arr, sortedPivotIndex + 1, right);
+    }
 }
