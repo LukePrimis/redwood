@@ -180,18 +180,25 @@ contract Exc is IExc{
     //todo: add modifiers for methods as detailed in handout
     
     // do we need to use memory?
-    function quicksort(Order[] memory arr, uint32 left, uint32 right) internal {
+    function quicksort(Order[] memory arr, uint32 left, uint32 right) internal returns (Order[] memory){
+        if (left >= right) {
+            return arr;
+        }
+        
         uint32 pivot = left + ((right - left) / 2);
         uint32 sortedPivotIndex = 0;
         (arr[pivot], arr[right]) = (arr[right], arr[pivot]);
+        
         bool pivotSet = false;
         while (!pivotSet) {
             uint32 itemFromLeft = left;
-            while (arr[itemFromLeft].price < arr[right].price) itemFromLeft++;
+            while (arr[itemFromLeft].price < arr[right].price && itemFromLeft < right) itemFromLeft++;
             uint32 itemFromRight = right;
-            while (arr[itemFromRight].price > arr[right].price) itemFromLeft--;
-            if (itemFromRight < itemFromLeft) {
-                (arr[itemFromLeft], arr[right]) = (arr[right], arr[itemFromLeft]);
+            while (arr[itemFromRight].price >= arr[right].price && itemFromRight > left) itemFromRight--;
+            if (itemFromRight <= itemFromLeft) {
+                if (itemFromLeft != right) {
+                    (arr[itemFromLeft], arr[right]) = (arr[right], arr[itemFromLeft]);
+                }
                 sortedPivotIndex = itemFromLeft;
                 pivotSet = true;
             }
@@ -199,7 +206,58 @@ contract Exc is IExc{
                 (arr[itemFromLeft], arr[itemFromRight]) = (arr[itemFromRight], arr[itemFromLeft]);
             }
         }
-        quicksort(arr, left, sortedPivotIndex - 1);
-        quicksort(arr, sortedPivotIndex + 1, right);
+        Order[] memory arr2;
+        if (sortedPivotIndex == 0) {
+            arr2 = arr;
+        }
+        else {
+            arr2 = quicksort(arr, left, sortedPivotIndex - 1);
+        }
+        return quicksort(arr2, sortedPivotIndex + 1, right);
+    }
+    
+    function sort(uint[] calldata arr) external returns (uint[] memory) {
+        return quicksortInt(arr, uint32(0), uint32(arr.length - 1));
+    }
+    
+    function quicksortInt(uint[] memory arr, uint32 left, uint32 right) internal returns (uint[] memory){
+        if (left >= right) {
+            return arr;
+        }
+        
+        uint32 pivot = left + ((right - left) / 2);
+        uint32 sortedPivotIndex = 0;
+        (arr[pivot], arr[right]) = (arr[right], arr[pivot]);
+        
+        bool pivotSet = false;
+        while (!pivotSet) {
+            uint32 itemFromLeft = left;
+            while (arr[itemFromLeft] < arr[right] && itemFromLeft < right) itemFromLeft++;
+            uint32 itemFromRight = right;
+            while (arr[itemFromRight] >= arr[right] && itemFromRight > left) itemFromRight--;
+            if (itemFromRight <= itemFromLeft) {
+                if (itemFromLeft != right) {
+                    (arr[itemFromLeft], arr[right]) = (arr[right], arr[itemFromLeft]);
+                }
+                sortedPivotIndex = itemFromLeft;
+                pivotSet = true;
+            }
+            else {
+                (arr[itemFromLeft], arr[itemFromRight]) = (arr[itemFromRight], arr[itemFromLeft]);
+            }
+        }
+        uint[] memory arr2;
+        if (sortedPivotIndex == 0) {
+            arr2 = arr;
+        }
+        else {
+            arr2 = quicksortInt(arr, left, sortedPivotIndex - 1);
+        }
+        return quicksortInt(arr2, sortedPivotIndex + 1, right);
+    }
+    
+    function testCall() external returns (bytes32) {
+        bytes32 juul = "juul";
+        return "hello";
     }
 }

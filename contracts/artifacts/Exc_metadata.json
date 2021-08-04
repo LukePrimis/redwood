@@ -176,6 +176,25 @@
 				"constant": false,
 				"inputs": [
 					{
+						"name": "arr",
+						"type": "uint256[]"
+					}
+				],
+				"name": "sort",
+				"outputs": [
+					{
+						"name": "",
+						"type": "uint256[]"
+					}
+				],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
 						"name": "amount",
 						"type": "uint256"
 					},
@@ -212,6 +231,20 @@
 				],
 				"payable": false,
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [],
+				"name": "testCall",
+				"outputs": [
+					{
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"payable": false,
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -404,9 +437,9 @@
 	},
 	"sources": {
 		"contracts/Exc.sol": {
-			"keccak256": "0xdb0f4390368b38baa8c712dcb581efeb827c5e7c63ce4c37d56fc4f40f65f2ec",
+			"keccak256": "0x0222804890cfb6bd88423d6e5a3584c8abc19c191b76ef4b74517f5a878cfb79",
 			"urls": [
-				"bzzr://9d8ea3aa623b406964f6bdec52b64808597fe4cefe4167ecef1e792d9d6ec567"
+				"bzzr://282d8fb56a4aeaec0de6daf65a31c709613273d0d42ec09959b091bb10452b81"
 			]
 		},
 		"contracts/IExc.sol": {
