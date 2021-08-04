@@ -52,20 +52,20 @@ contract Pool {
         if (tokenAmount > 0) {
             IERC20(token1).transferFrom(msg.sender, address(this), tokenAmount);
             IExc(dex).deposit(tokenAmount, token1T);
-            traderBalances[msg.sender][token1T] += tokenAmount;
-            totalToken += tokenAmount;
+            traderBalances[msg.sender][token1T] = traderBalances[msg.sender][token1T].add(tokenAmount);
+            totalToken = totalToken.add(tokenAmount);
         }
         if (pineAmount > 0) {
             IERC20(tokenP).transferFrom(msg.sender, address(this), pineAmount);
             IExc(dex).deposit(pineAmount, tokenPT);
-            traderBalances[msg.sender][tokenPT] += pineAmount;
-            totalPine += pineAmount;
+            traderBalances[msg.sender][tokenPT] = traderBalances[msg.sender][tokenPT].add(pineAmount);
+            totalPine = totalPine.add(pineAmount);
         }
         IExc(dex).deleteLimitOrder(lastSellOrderID, token1T, IExc.Side.SELL);
         IExc(dex).deleteLimitOrder(lastBuyOrderID, token1T, IExc.Side.BUY);
-        uint newPrice = totalPine / totalToken;
+        uint newPrice = totalPine.div(totalToken);
         IExc(dex).makeLimitOrder(token1T, totalToken, newPrice, IExc.Side.SELL);
-        IExc(dex).makeLimitOrder(token1T, totalPine / newPrice, newPrice, IExc.Side.BUY);
+        IExc(dex).makeLimitOrder(token1T, totalPine.div(newPrice), newPrice, IExc.Side.BUY);
     }
 
     function withdraw(uint tokenAmount, uint pineAmount) external{
@@ -74,19 +74,19 @@ contract Pool {
         if (pineAmount > 0) {
             IExc(dex).withdraw(pineAmount, tokenPT);
             IERC20(tokenP).transfer(msg.sender, pineAmount);
-            traderBalances[msg.sender][tokenPT] -= pineAmount;
-            totalPine -= pineAmount;
+            traderBalances[msg.sender][tokenPT] = traderBalances[msg.sender][tokenPT].sub(pineAmount);
+            totalPine = totalPine.sub(pineAmount);
         } 
         if (tokenAmount > 0) {
             IExc(dex).withdraw(tokenAmount, token1T);
-            IERC20(tokenP).transfer(msg.sender, tokenAmount);
-            traderBalances[msg.sender][token1T] -= tokenAmount;
-            totalToken -= tokenAmount;
+            IERC20(_token1).transfer(msg.sender, tokenAmount);
+            traderBalances[msg.sender][token1T] = traderBalances[msg.sender][token1T].sub(tokenAmount);
+            totalToken = totalToken.sub(tokenAmount);
         } 
         IExc(dex).deleteLimitOrder(lastSellOrderID, token1T, IExc.Side.SELL);
         IExc(dex).deleteLimitOrder(lastBuyOrderID, token1T, IExc.Side.BUY);
-        uint newPrice = totalPine / totalToken;
+        uint newPrice = totalPine.div(totalToken);
         IExc(dex).makeLimitOrder(token1T, totalToken, newPrice, IExc.Side.SELL);
-        IExc(dex).makeLimitOrder(token1T, totalPine / newPrice, newPrice, IExc.Side.BUY);
+        IExc(dex).makeLimitOrder(token1T, totalPine.div(newPrice), newPrice, IExc.Side.BUY);
     }
 }
