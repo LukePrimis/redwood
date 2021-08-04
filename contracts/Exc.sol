@@ -183,33 +183,34 @@ contract Exc is IExc{
             uint amountToFill = amount;
             while (amountToFill > 0) {
                 uint len = orderbook[ticker][uint(Side.BUY)].length;
-                if (orderbook[ticker][uint(Side.BUY)][len - 1].amount > amountToFill) {
+                Order memory lastOrder = orderbook[ticker][uint(Side.BUY)][len - 1];
+                if (lastOrder.amount > amountToFill) {
                     // decrease remaining amount of order by the amount we are filing
                     orderbook[ticker][uint(Side.BUY)][len - 1].amount -= amountToFill;
                     
                     // give buyer their new coins, take away coins from seller
-                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader][ticker] += amountToFill;
+                    traderBalances[lastOrder.trader][ticker] += amountToFill;
                     traderBalances[msg.sender][ticker] -= amountToFill;
                     
                     // give seller their new PIN, take away PIN from buyer
-                    uint totalPrice = amountToFill.mul(orderbook[ticker][uint(Side.BUY)][len - 1].price);
+                    uint totalPrice = amountToFill.mul(lastOrder.price);
                     traderBalances[msg.sender]["PIN"] += totalPrice;
-                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader]["PIN"] -= totalPrice;
+                    traderBalances[lastOrder.trader]["PIN"] -= totalPrice;
                     
                     amountToFill = 0;
                 }
                 else {
                     // give buyer their new coins, take away coins from seller
-                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader][ticker] += orderbook[ticker][uint(Side.BUY)][len - 1].amount;
-                    traderBalances[msg.sender][ticker] -= orderbook[ticker][uint(Side.BUY)][len - 1].amount;
+                    traderBalances[lastOrder.trader][ticker] += lastOrder.amount;
+                    traderBalances[msg.sender][ticker] -= lastOrder.amount;
                     
                     // give seller their new PIN, take away PIN from buyer
-                    uint totalPrice = (orderbook[ticker][uint(Side.BUY)][len - 1].amount).mul(orderbook[ticker][uint(Side.BUY)][len - 1].price);
+                    uint totalPrice = (lastOrder.amount).mul(lastOrder.price);
                     traderBalances[msg.sender]["PIN"] += totalPrice;
-                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader]["PIN"] -= totalPrice;
+                    traderBalances[lastOrder.trader]["PIN"] -= totalPrice;
                     
                     // decrease the amount we have left to fill
-                    amountToFill -= orderbook[ticker][uint(Side.BUY)][len - 1].amount;
+                    amountToFill -= lastOrder.amount;
                     
                     // remove the completely filled BUY limit order
                     orderbook[ticker][uint(Side.BUY)].pop();
@@ -219,35 +220,36 @@ contract Exc is IExc{
             uint amountToFill = amount;
             while (amountToFill > 0) {
                 uint len = orderbook[ticker][uint(Side.SELL)].length;
-                if (orderbook[ticker][uint(Side.SELL)][len-1].amount > amountToFill) {
-                    uint totalPrice = amountToFill.mul(orderbook[ticker][uint(Side.SELL)][len-1].price);
+                Order memory lastOrder = orderbook[ticker][uint(Side.SELL)][len - 1];
+                if (lastOrder.amount > amountToFill) {
+                    uint totalPrice = amountToFill.mul(lastOrder.price);
                     require(traderBalances[msg.sender]["PIN"] >= totalPrice, "insufficient funds to purchase token");
                     // take away amoiunt we are filling from order
                     orderbook[ticker][uint(Side.SELL)][len - 1].amount -= amountToFill;
 
                     // take away PIN from buyer, and give PIN to seller
                     traderBalances[msg.sender]["PIN"] -= totalPrice;
-                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader]["PIN"] += totalPrice;
+                    traderBalances[lastOrder.trader]["PIN"] += totalPrice;
                     
                     // give token to buyer, take away token from seller
                     traderBalances[msg.sender][ticker] += amountToFill;
-                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader][ticker] -= amountToFill;
+                    traderBalances[lastOrder.trader][ticker] -= amountToFill;
                     
                     amountToFill = 0;
                 } 
                 else {
-                    uint totalPrice = (orderbook[ticker][uint(Side.SELL)][len-1].amount).mul(orderbook[ticker][uint(Side.SELL)][len-1].price);
+                    uint totalPrice = (lastOrder.amount).mul(lastOrder.price);
                     require(traderBalances[msg.sender]["PIN"] >= totalPrice, "insufficient funds to purchase token");
 
                     // take away PIN from buyer, and give PIN to seller
                     traderBalances[msg.sender]["PIN"] -= totalPrice;
-                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader]["PIN"] += totalPrice;
+                    traderBalances[lastOrder.trader]["PIN"] += totalPrice;
                     
                     // give token to buyer, take away token from seller
-                    traderBalances[msg.sender][ticker] += orderbook[ticker][uint(Side.SELL)][len - 1].amount;
-                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader][ticker] -= orderbook[ticker][uint(Side.SELL)][len - 1].amount;
+                    traderBalances[msg.sender][ticker] += lastOrder.amount;
+                    traderBalances[lastOrder.trader][ticker] -= lastOrder.amount;
                     
-                    amountToFill -= orderbook[ticker][uint(Side.SELL)][len - 1].amount;
+                    amountToFill -= lastOrder.amount;
                     orderbook[ticker][uint(Side.SELL)].pop();
                 }
             }
@@ -297,21 +299,21 @@ contract Exc is IExc{
         return quicksortInt(arr, uint32(0), uint32(arr.length - 1));
     }
     
-    function quicksortInt(uint[] memory arr, uint32 left, uint32 right) internal returns (uint[] memory){
+    function quicksortInt(uint[] memory arr, uint left, uint right) internal returns (uint[] memory){
         if (left >= right) {
             return arr;
         }
         
-        uint32 pivot = left + ((right - left) / 2);
-        uint32 sortedPivotIndex = 0;
+        uint pivot = left.add((right.sub(left)).div(2));
+        uint sortedPivotIndex = 0;
         (arr[pivot], arr[right]) = (arr[right], arr[pivot]);
         
         bool pivotSet = false;
         while (!pivotSet) {
-            uint32 itemFromLeft = left;
-            while (arr[itemFromLeft] < arr[right] && itemFromLeft < right) itemFromLeft++;
-            uint32 itemFromRight = right;
-            while (arr[itemFromRight] >= arr[right] && itemFromRight > left) itemFromRight--;
+            uint itemFromLeft = left;
+            while (arr[itemFromLeft] < arr[right] && itemFromLeft < right) itemFromLeft = itemFromLeft.add(1);
+            uint itemFromRight = right;
+            while (arr[itemFromRight] >= arr[right] && itemFromRight > left) itemFromRight = itemFromRight.sub(1);
             if (itemFromRight <= itemFromLeft) {
                 if (itemFromLeft != right) {
                     (arr[itemFromLeft], arr[right]) = (arr[right], arr[itemFromLeft]);
@@ -328,13 +330,19 @@ contract Exc is IExc{
             arr2 = arr;
         }
         else {
-            arr2 = quicksortInt(arr, left, sortedPivotIndex - 1);
+            arr2 = quicksortInt(arr, left, sortedPivotIndex.sub(1));
         }
-        return quicksortInt(arr2, sortedPivotIndex + 1, right);
+        return quicksortInt(arr2, sortedPivotIndex.add(1), right);
     }
     
     function getpin() external returns (bytes32) {
         return "PIN";
+    }
+    
+    function testmath(uint inp) external returns (uint) {
+        uint t = inp;
+        t = t.mul(10);
+        return t;
     }
 }
  

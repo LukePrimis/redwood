@@ -104,6 +104,25 @@
 				"type": "function"
 			},
 			{
+				"constant": false,
+				"inputs": [
+					{
+						"name": "inp",
+						"type": "uint256"
+					}
+				],
+				"name": "testmath",
+				"outputs": [
+					{
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"constant": true,
 				"inputs": [
 					{
@@ -437,9 +456,9 @@
 	},
 	"sources": {
 		"contracts/Exc.sol": {
-			"keccak256": "0x95a8353f722e7bf5c6f2207ed654b04fd5800f1e809fc10cd8b1435cedc0070e",
+			"keccak256": "0x5552ea7078f90c6aa22d2eb4084b40047f11ad6dbf879f18df804378e5294904",
 			"urls": [
-				"bzzr://afcd8cdf0dd82f20e8acedb212110cf83818944b3bae1f866fb03f2b8a7fc328"
+				"bzzr://b36be46d6e8ca406d20cda0f9e9589dcfccd50066bb0811395d69d73a916b647"
 			]
 		},
 		"contracts/IExc.sol": {
