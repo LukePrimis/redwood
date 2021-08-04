@@ -336,7 +336,7 @@
 		"compilationTarget": {
 			"contracts/dummy/Pin.sol": "Pin"
 		},
-		"evmVersion": "constantinople",
+		"evmVersion": "byzantium",
 		"libraries": {},
 		"optimizer": {
 			"enabled": false,
@@ -346,9 +346,9 @@
 	},
 	"sources": {
 		"contracts/dummy/Pin.sol": {
-			"keccak256": "0x4441368626cd8182f65727598c4671d726ed6419f75083fb13c2a0b6ba10d3d0",
+			"keccak256": "0xdd0eddb0b945b3bfbe65aea162234d9c1c34b727a98470ee3d30adaabd0b7eb3",
 			"urls": [
-				"bzzr://09afc69bbe8975acc88e03652fde0eb6f7202989db68accf7efa4ec8af09076c"
+				"bzzr://cf1dc6474f96a815bf10899042c5a371791889f49727046d994083ac29acd12c"
 			]
 		},
 		"contracts/libraries/GSN/Context.sol": {

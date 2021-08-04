@@ -137,6 +137,7 @@ contract Exc is IExc{
             
             require(tickerFound && ticker != "PIN", "Tokenlist didn't have ticker or token was PIN");
             Order memory lmo = Order(nextOrderID, msg.sender, side, ticker, amount, 0, price, now);
+            nextOrderID++;
             orderbook[ticker][uint(side)].push(lmo);
             quicksort(orderbook[ticker][uint(side)], 0, uint32(orderbook[ticker][uint(side)].length - 1));
     }
@@ -169,13 +170,89 @@ contract Exc is IExc{
     
     //taking best order and 
     //manually 
+    
+    // todo: what if someone deposits, makes limit order, then withdraws? how to handle?
+
     function makeMarketOrder(
         bytes32 ticker,
         uint amount,
         Side side)
         external {
-       
+        if (side == Side.SELL) {
+            require(traderBalances[msg.sender][ticker] >= amount, "insufficient funds to sell");
+            uint amountToFill = amount;
+            while (amountToFill > 0) {
+                uint len = orderbook[ticker][uint(Side.BUY)].length;
+                if (orderbook[ticker][uint(Side.BUY)][len - 1].amount > amountToFill) {
+                    // decrease remaining amount of order by the amount we are filing
+                    orderbook[ticker][uint(Side.BUY)][len - 1].amount -= amountToFill;
+                    
+                    // give buyer their new coins, take away coins from seller
+                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader][ticker] += amountToFill;
+                    traderBalances[msg.sender][ticker] -= amountToFill;
+                    
+                    // give seller their new PIN, take away PIN from buyer
+                    uint totalPrice = amountToFill.mul(orderbook[ticker][uint(Side.BUY)][len - 1].price);
+                    traderBalances[msg.sender]["PIN"] += totalPrice;
+                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader]["PIN"] -= totalPrice;
+                    
+                    amountToFill = 0;
+                }
+                else {
+                    // give buyer their new coins, take away coins from seller
+                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader][ticker] += orderbook[ticker][uint(Side.BUY)][len - 1].amount;
+                    traderBalances[msg.sender][ticker] -= orderbook[ticker][uint(Side.BUY)][len - 1].amount;
+                    
+                    // give seller their new PIN, take away PIN from buyer
+                    uint totalPrice = (orderbook[ticker][uint(Side.BUY)][len - 1].amount).mul(orderbook[ticker][uint(Side.BUY)][len - 1].price);
+                    traderBalances[msg.sender]["PIN"] += totalPrice;
+                    traderBalances[orderbook[ticker][uint(Side.BUY)][len - 1].trader]["PIN"] -= totalPrice;
+                    
+                    // decrease the amount we have left to fill
+                    amountToFill -= orderbook[ticker][uint(Side.BUY)][len - 1].amount;
+                    
+                    // remove the completely filled BUY limit order
+                    orderbook[ticker][uint(Side.BUY)].pop();
+                }
+            }
+        } else {
+            uint amountToFill = amount;
+            while (amountToFill > 0) {
+                uint len = orderbook[ticker][uint(Side.SELL)].length;
+                if (orderbook[ticker][uint(Side.SELL)][len-1].amount > amountToFill) {
+                    uint totalPrice = amountToFill.mul(orderbook[ticker][uint(Side.SELL)][len-1].price);
+                    require(traderBalances[msg.sender]["PIN"] >= totalPrice, "insufficient funds to purchase token");
+                    // take away amoiunt we are filling from order
+                    orderbook[ticker][uint(Side.SELL)][len - 1].amount -= amountToFill;
+
+                    // take away PIN from buyer, and give PIN to seller
+                    traderBalances[msg.sender]["PIN"] -= totalPrice;
+                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader]["PIN"] += totalPrice;
+                    
+                    // give token to buyer, take away token from seller
+                    traderBalances[msg.sender][ticker] += amountToFill;
+                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader][ticker] -= amountToFill;
+                    
+                    amountToFill = 0;
+                } 
+                else {
+                    uint totalPrice = (orderbook[ticker][uint(Side.SELL)][len-1].amount).mul(orderbook[ticker][uint(Side.SELL)][len-1].price);
+                    require(traderBalances[msg.sender]["PIN"] >= totalPrice, "insufficient funds to purchase token");
+
+                    // take away PIN from buyer, and give PIN to seller
+                    traderBalances[msg.sender]["PIN"] -= totalPrice;
+                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader]["PIN"] += totalPrice;
+                    
+                    // give token to buyer, take away token from seller
+                    traderBalances[msg.sender][ticker] += orderbook[ticker][uint(Side.SELL)][len - 1].amount;
+                    traderBalances[orderbook[ticker][uint(Side.SELL)][len-1].trader][ticker] -= orderbook[ticker][uint(Side.SELL)][len - 1].amount;
+                    
+                    amountToFill -= orderbook[ticker][uint(Side.SELL)][len - 1].amount;
+                    orderbook[ticker][uint(Side.SELL)].pop();
+                }
+            }
     }
+}
     
     //todo: add modifiers for methods as detailed in handout
     
@@ -256,8 +333,8 @@ contract Exc is IExc{
         return quicksortInt(arr2, sortedPivotIndex + 1, right);
     }
     
-    function testCall() external returns (bytes32) {
-        bytes32 juul = "juul";
-        return "hello";
+    function getpin() external returns (bytes32) {
+        return "PIN";
     }
 }
+ 

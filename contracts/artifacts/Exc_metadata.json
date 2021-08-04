@@ -33,6 +33,20 @@
 				"type": "function"
 			},
 			{
+				"constant": false,
+				"inputs": [],
+				"name": "getpin",
+				"outputs": [
+					{
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"constant": true,
 				"inputs": [
 					{
@@ -235,20 +249,6 @@
 			},
 			{
 				"constant": false,
-				"inputs": [],
-				"name": "testCall",
-				"outputs": [
-					{
-						"name": "",
-						"type": "bytes32"
-					}
-				],
-				"payable": false,
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"constant": false,
 				"inputs": [
 					{
 						"name": "ticker",
@@ -437,9 +437,9 @@
 	},
 	"sources": {
 		"contracts/Exc.sol": {
-			"keccak256": "0x0222804890cfb6bd88423d6e5a3584c8abc19c191b76ef4b74517f5a878cfb79",
+			"keccak256": "0x95a8353f722e7bf5c6f2207ed654b04fd5800f1e809fc10cd8b1435cedc0070e",
 			"urls": [
-				"bzzr://282d8fb56a4aeaec0de6daf65a31c709613273d0d42ec09959b091bb10452b81"
+				"bzzr://afcd8cdf0dd82f20e8acedb212110cf83818944b3bae1f866fb03f2b8a7fc328"
 			]
 		},
 		"contracts/IExc.sol": {
