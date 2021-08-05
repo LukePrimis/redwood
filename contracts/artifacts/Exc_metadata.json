@@ -33,20 +33,6 @@
 				"type": "function"
 			},
 			{
-				"constant": false,
-				"inputs": [],
-				"name": "getpin",
-				"outputs": [
-					{
-						"name": "",
-						"type": "bytes32"
-					}
-				],
-				"payable": false,
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"constant": true,
 				"inputs": [
 					{
@@ -101,25 +87,6 @@
 				],
 				"payable": false,
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"constant": false,
-				"inputs": [
-					{
-						"name": "inp",
-						"type": "uint256"
-					}
-				],
-				"name": "testmath",
-				"outputs": [
-					{
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"payable": false,
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -456,9 +423,9 @@
 	},
 	"sources": {
 		"contracts/Exc.sol": {
-			"keccak256": "0x5552ea7078f90c6aa22d2eb4084b40047f11ad6dbf879f18df804378e5294904",
+			"keccak256": "0xe36bb5d877eb9e3d171bca86643ae9598b935235f0488d1990c8c645671ad97b",
 			"urls": [
-				"bzzr://b36be46d6e8ca406d20cda0f9e9589dcfccd50066bb0811395d69d73a916b647"
+				"bzzr://d593a88e07544cf737c35c8d1b0d851d83aa509a81e3e8a127abe7d6f4a45686"
 			]
 		},
 		"contracts/IExc.sol": {

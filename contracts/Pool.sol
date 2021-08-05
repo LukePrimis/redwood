@@ -7,6 +7,7 @@ import '../contracts/libraries/math/SafeMath.sol';
 import '../contracts/libraries/token/ERC20/IERC20.sol';
 
 contract Pool {
+    using SafeMath for uint;
     
     /// @notice some parameters for the pool to function correctly
     address private factory;
@@ -79,7 +80,7 @@ contract Pool {
         } 
         if (tokenAmount > 0) {
             IExc(dex).withdraw(tokenAmount, token1T);
-            IERC20(_token1).transfer(msg.sender, tokenAmount);
+            IERC20(token1).transfer(msg.sender, tokenAmount);
             traderBalances[msg.sender][token1T] = traderBalances[msg.sender][token1T].sub(tokenAmount);
             totalToken = totalToken.sub(tokenAmount);
         } 

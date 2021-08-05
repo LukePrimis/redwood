@@ -35,7 +35,7 @@ contract Exc is IExc{
     /// different, implementing a function that just takes in the address of the trader and then the ticker of a
     /// token instead would suffice
     mapping(address => mapping(bytes32 => uint)) public traderBalances;
-    
+
     /// @notice an event representing all the needed info regarding a new trade on the exchange
     event NewTrade(
         uint tradeId,
@@ -91,8 +91,7 @@ contract Exc is IExc{
         external {
             Token memory tk = tokens[ticker];
             IERC20(tk.tokenAddress).transferFrom(msg.sender, address(this), amount);
-            traderBalances[address(this)][ticker] += amount;
-            traderBalances[msg.sender][ticker] -= amount;
+            traderBalances[msg.sender][ticker] = traderBalances[msg.sender][ticker].add(amount);
         }
     
     // todo: implement withdraw, which should do the opposite of deposit. The trader should not be able to withdraw more than
@@ -101,11 +100,10 @@ contract Exc is IExc{
         uint amount,
         bytes32 ticker)
         external {
-            require(traderBalances[address(this)][ticker] >= amount);
+            require(traderBalances[msg.sender][ticker] >= amount);
             Token memory tk = tokens[ticker];
             IERC20(tk.tokenAddress).transfer(msg.sender, amount);
-            traderBalances[address(this)][ticker] -= amount;
-            traderBalances[msg.sender][ticker] += amount;
+            traderBalances[msg.sender][ticker] = traderBalances[msg.sender][ticker].sub(amount);
     }
     
     // todo: implement makeLimitOrder, which creates a limit order based on the parameters provided. This method should only be
@@ -139,7 +137,7 @@ contract Exc is IExc{
             Order memory lmo = Order(nextOrderID, msg.sender, side, ticker, amount, 0, price, now);
             nextOrderID++;
             orderbook[ticker][uint(side)].push(lmo);
-            quicksort(orderbook[ticker][uint(side)], 0, uint32(orderbook[ticker][uint(side)].length - 1));
+            // orderbook[ticker][uint(side)] = quicksort(orderbook[ticker][uint(side)], uint(0), uint(orderbook[ticker][uint(side)].length - 1));
     }
     
     // todo: implement deleteLimitOrder, which will delete a limit order from the orderBook as long as the same trader is deleting
@@ -155,9 +153,11 @@ contract Exc is IExc{
             for (uint i = 0; i < length; i++) {
                 if (orderbook[ticker][uint(side)][i].id == id) {
                     require(msg.sender == orderbook[ticker][uint(side)][i].trader, "deleter was not trader");
-                    orderbook[ticker][uint(side)][i] = orderbook[ticker][uint(side)][length - 1];
+                    if (i != length - 1) {
+                        orderbook[ticker][uint(side)][i] = orderbook[ticker][uint(side)][length - 1];
+                    }
                     orderbook[ticker][uint(side)].pop();
-                    quicksort(orderbook[ticker][uint(side)], 0, uint32(length - 1));
+                    // orderbook[ticker][uint(side)] = quicksort(orderbook[ticker][uint(side)], 0, uint32(length - 1));
                     return true;
                 }
             }
@@ -178,6 +178,8 @@ contract Exc is IExc{
         uint amount,
         Side side)
         external {
+        require(ticker != "PIN", "Cannot make market order for PIN");
+        require(tokens[ticker].tokenAddress != address(0), "Token not in exchange");
         if (side == Side.SELL) {
             require(traderBalances[msg.sender][ticker] >= amount, "insufficient funds to sell");
             uint amountToFill = amount;
@@ -186,31 +188,32 @@ contract Exc is IExc{
                 Order memory lastOrder = orderbook[ticker][uint(Side.BUY)][len - 1];
                 if (lastOrder.amount > amountToFill) {
                     // decrease remaining amount of order by the amount we are filing
-                    orderbook[ticker][uint(Side.BUY)][len - 1].amount -= amountToFill;
+                    orderbook[ticker][uint(Side.BUY)][len - 1].amount = orderbook[ticker][uint(Side.BUY)][len - 1].amount.sub(amountToFill);
                     
                     // give buyer their new coins, take away coins from seller
-                    traderBalances[lastOrder.trader][ticker] += amountToFill;
-                    traderBalances[msg.sender][ticker] -= amountToFill;
+                    traderBalances[lastOrder.trader][ticker] = traderBalances[lastOrder.trader][ticker].add(amountToFill);
+                    traderBalances[msg.sender][ticker] = traderBalances[msg.sender][ticker].sub(amountToFill);
                     
                     // give seller their new PIN, take away PIN from buyer
                     uint totalPrice = amountToFill.mul(lastOrder.price);
-                    traderBalances[msg.sender]["PIN"] += totalPrice;
-                    traderBalances[lastOrder.trader]["PIN"] -= totalPrice;
+                    traderBalances[msg.sender]["PIN"] = traderBalances[msg.sender]["PIN"].add(totalPrice);
+                    traderBalances[msg.sender]["PIN"] = traderBalances[lastOrder.trader]["PIN"].sub(totalPrice);
                     
                     amountToFill = 0;
+                    // emit NewTrade()
                 }
                 else {
                     // give buyer their new coins, take away coins from seller
-                    traderBalances[lastOrder.trader][ticker] += lastOrder.amount;
-                    traderBalances[msg.sender][ticker] -= lastOrder.amount;
+                    traderBalances[msg.sender]["PIN"] = traderBalances[lastOrder.trader][ticker].add(lastOrder.amount);
+                    traderBalances[msg.sender][ticker] = traderBalances[msg.sender]["PIN"].sub(lastOrder.amount);
                     
                     // give seller their new PIN, take away PIN from buyer
                     uint totalPrice = (lastOrder.amount).mul(lastOrder.price);
-                    traderBalances[msg.sender]["PIN"] += totalPrice;
-                    traderBalances[lastOrder.trader]["PIN"] -= totalPrice;
+                    traderBalances[msg.sender]["PIN"] = traderBalances[msg.sender]["PIN"].add(totalPrice);
+                    traderBalances[lastOrder.trader]["PIN"] = traderBalances[msg.sender]["PIN"].sub(totalPrice);
                     
                     // decrease the amount we have left to fill
-                    amountToFill -= lastOrder.amount;
+                    amountToFill = amountToFill.sub(lastOrder.amount);
                     
                     // remove the completely filled BUY limit order
                     orderbook[ticker][uint(Side.BUY)].pop();
@@ -225,15 +228,15 @@ contract Exc is IExc{
                     uint totalPrice = amountToFill.mul(lastOrder.price);
                     require(traderBalances[msg.sender]["PIN"] >= totalPrice, "insufficient funds to purchase token");
                     // take away amoiunt we are filling from order
-                    orderbook[ticker][uint(Side.SELL)][len - 1].amount -= amountToFill;
+                    orderbook[ticker][uint(Side.SELL)][len - 1].amount = orderbook[ticker][uint(Side.SELL)][len - 1].amount.sub(amountToFill);
 
                     // take away PIN from buyer, and give PIN to seller
-                    traderBalances[msg.sender]["PIN"] -= totalPrice;
-                    traderBalances[lastOrder.trader]["PIN"] += totalPrice;
+                    traderBalances[msg.sender]["PIN"] = traderBalances[msg.sender]["PIN"].sub(totalPrice);
+                    traderBalances[msg.sender]["PIN"] = traderBalances[lastOrder.trader]["PIN"].add(totalPrice);
                     
                     // give token to buyer, take away token from seller
-                    traderBalances[msg.sender][ticker] += amountToFill;
-                    traderBalances[lastOrder.trader][ticker] -= amountToFill;
+                    traderBalances[msg.sender][ticker] = traderBalances[msg.sender][ticker].add(amountToFill);
+                    traderBalances[lastOrder.trader][ticker] = traderBalances[lastOrder.trader][ticker].sub(amountToFill);
                     
                     amountToFill = 0;
                 } 
@@ -242,14 +245,14 @@ contract Exc is IExc{
                     require(traderBalances[msg.sender]["PIN"] >= totalPrice, "insufficient funds to purchase token");
 
                     // take away PIN from buyer, and give PIN to seller
-                    traderBalances[msg.sender]["PIN"] -= totalPrice;
-                    traderBalances[lastOrder.trader]["PIN"] += totalPrice;
+                    traderBalances[msg.sender]["PIN"] = traderBalances[msg.sender]["PIN"].sub(totalPrice);
+                    traderBalances[lastOrder.trader]["PIN"] = traderBalances[lastOrder.trader]["PIN"].add(totalPrice);
                     
                     // give token to buyer, take away token from seller
-                    traderBalances[msg.sender][ticker] += lastOrder.amount;
-                    traderBalances[lastOrder.trader][ticker] -= lastOrder.amount;
+                    traderBalances[msg.sender][ticker] = traderBalances[msg.sender][ticker].add(lastOrder.amount);
+                    traderBalances[lastOrder.trader][ticker] = traderBalances[lastOrder.trader][ticker].sub(lastOrder.amount);
                     
-                    amountToFill -= lastOrder.amount;
+                    amountToFill = amountToFill.sub(lastOrder.amount);
                     orderbook[ticker][uint(Side.SELL)].pop();
                 }
             }
@@ -259,21 +262,21 @@ contract Exc is IExc{
     //todo: add modifiers for methods as detailed in handout
     
     // do we need to use memory?
-    function quicksort(Order[] memory arr, uint32 left, uint32 right) internal returns (Order[] memory){
+    function quicksort(Order[] memory arr, uint left, uint right) internal returns (Order[] memory){
         if (left >= right) {
             return arr;
         }
         
-        uint32 pivot = left + ((right - left) / 2);
-        uint32 sortedPivotIndex = 0;
+        uint pivot = left.add((right.sub(left)).div(2));
+        uint sortedPivotIndex = 0;
         (arr[pivot], arr[right]) = (arr[right], arr[pivot]);
         
         bool pivotSet = false;
         while (!pivotSet) {
-            uint32 itemFromLeft = left;
-            while (arr[itemFromLeft].price < arr[right].price && itemFromLeft < right) itemFromLeft++;
-            uint32 itemFromRight = right;
-            while (arr[itemFromRight].price >= arr[right].price && itemFromRight > left) itemFromRight--;
+            uint itemFromLeft = left;
+            while (arr[itemFromLeft].price < arr[right].price && itemFromLeft < right) itemFromLeft = itemFromLeft.add(1);
+            uint itemFromRight = right;
+            while (arr[itemFromRight].price >= arr[right].price && itemFromRight > left) itemFromRight = itemFromRight.sub(1);
             if (itemFromRight <= itemFromLeft) {
                 if (itemFromLeft != right) {
                     (arr[itemFromLeft], arr[right]) = (arr[right], arr[itemFromLeft]);
@@ -290,9 +293,9 @@ contract Exc is IExc{
             arr2 = arr;
         }
         else {
-            arr2 = quicksort(arr, left, sortedPivotIndex - 1);
+            arr2 = quicksort(arr, left, sortedPivotIndex.sub(1));
         }
-        return quicksort(arr2, sortedPivotIndex + 1, right);
+        return quicksort(arr2, sortedPivotIndex.add(1), right);
     }
     
     function sort(uint[] calldata arr) external returns (uint[] memory) {
@@ -333,16 +336,6 @@ contract Exc is IExc{
             arr2 = quicksortInt(arr, left, sortedPivotIndex.sub(1));
         }
         return quicksortInt(arr2, sortedPivotIndex.add(1), right);
-    }
-    
-    function getpin() external returns (bytes32) {
-        return "PIN";
-    }
-    
-    function testmath(uint inp) external returns (uint) {
-        uint t = inp;
-        t = t.mul(10);
-        return t;
     }
 }
  
