@@ -336,7 +336,7 @@
 		"compilationTarget": {
 			"contracts/dummy/Zrx.sol": "Zrx"
 		},
-		"evmVersion": "constantinople",
+		"evmVersion": "byzantium",
 		"libraries": {},
 		"optimizer": {
 			"enabled": false,
@@ -346,9 +346,9 @@
 	},
 	"sources": {
 		"contracts/dummy/Zrx.sol": {
-			"keccak256": "0x669ff41b8294b76f5f6838c48377dddfe1e8ef083b5f2946c6e269362110895b",
+			"keccak256": "0xd631e8de265da3b06a96aab7c78828c958c3ce58377db7c21047f3c8089f70e2",
 			"urls": [
-				"bzzr://0cd12f7d470c2fb6e4838a157ae6127621908ecd222d5d42ddb551baf41faac9"
+				"bzzr://665ffdd056f0e102fc293a37f7790e4dbdda3124e2e1ede20ebfda794dc2a7f5"
 			]
 		},
 		"contracts/libraries/GSN/Context.sol": {

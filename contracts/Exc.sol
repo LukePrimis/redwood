@@ -31,6 +31,9 @@ contract Exc is IExc{
     uint nextTradeID;
     uint nextOrderID;
     
+    // for testing bubblesort
+    mapping(uint => uint[]) public testmap;
+
     /// @notice, this is the more standardized form of the main wallet data structure, if you're using something a bit
     /// different, implementing a function that just takes in the address of the trader and then the ticker of a
     /// token instead would suffice
@@ -46,6 +49,14 @@ contract Exc is IExc{
         uint amount,
         uint price,
         uint date
+    );
+    
+    event NewLimitOrder(
+        address trader, 
+        bytes32 ticker,
+        uint side,
+        uint amount,
+        uint price
     );
     
     // todo: implement getOrders, which simply returns the orders for a specific token on a specific side
@@ -120,11 +131,11 @@ contract Exc is IExc{
         external {
             //ask abt how side works in makeLimitOrder
             if(side == Side.SELL) {
-                require(traderBalances[msg.sender][ticker] >= amount);
+                require(traderBalances[msg.sender][ticker] >= amount, "insuffucient funds to sell");
             } else {
                 //require(balances[msg.sender][PIN] >= amount)
                 //converting amount to pine
-                require(traderBalances[msg.sender]["PIN"] >= amount.mul(price));
+                require(traderBalances[msg.sender]["PIN"] >= amount.mul(price), "insufficient funds to buy");
             }
             bool tickerFound = false;
             for (uint i = 0; i < tokenList.length && !tickerFound; i++) {
@@ -137,7 +148,14 @@ contract Exc is IExc{
             Order memory lmo = Order(nextOrderID, msg.sender, side, ticker, amount, 0, price, now);
             nextOrderID++;
             orderbook[ticker][uint(side)].push(lmo);
-            // orderbook[ticker][uint(side)] = quicksort(orderbook[ticker][uint(side)], uint(0), uint(orderbook[ticker][uint(side)].length - 1));
+            emit NewLimitOrder(msg.sender, ticker, uint(side), amount, price);
+            if (orderbook[ticker][uint(side)].length > 1 && side == Side.BUY) {
+                Order[] memory reversed = orderbook[ticker][uint(side)];
+                for (uint i = 0; i < reversed.length; i++) {
+                    orderbook[ticker][uint(side)][reversed.length - 1 - i] = reversed[i];
+                }
+            }
+            // quicksort(orderbook[ticker][uint(side)], uint(0), uint(orderbook[ticker][uint(side)].length - 1));
     }
     
     // todo: implement deleteLimitOrder, which will delete a limit order from the orderBook as long as the same trader is deleting
@@ -157,6 +175,7 @@ contract Exc is IExc{
                         orderbook[ticker][uint(side)][i] = orderbook[ticker][uint(side)][length - 1];
                     }
                     orderbook[ticker][uint(side)].pop();
+                    bubblesort(orderbook[ticker][uint(side)]);
                     // orderbook[ticker][uint(side)] = quicksort(orderbook[ticker][uint(side)], 0, uint32(length - 1));
                     return true;
                 }
@@ -336,6 +355,59 @@ contract Exc is IExc{
             arr2 = quicksortInt(arr, left, sortedPivotIndex.sub(1));
         }
         return quicksortInt(arr2, sortedPivotIndex.add(1), right);
+    }
+    
+    function getzrx() external returns (bytes32) {
+        return "ZRX";
+    }
+    
+    function setmap(uint ind, uint[] calldata arr) external {
+        testmap[ind] = arr;
+    }
+    
+    function getmap(uint ind) external returns (uint[] memory) {
+        return testmap[ind];
+    }
+    
+    // function testsort() external {
+    //     // testmap[1] = [2, 3, 1, 4, 5];
+    //     bubblesort(testmap[1], Side.SELL);
+    // }
+    
+    function bubblesort(Order[] storage arr) internal {
+        Side side = arr[0].side;
+        if (side == Side.SELL) {
+            for (uint i = 0; i < arr.length; i++) {
+                for (uint j = 0; j < arr.length - 1; j++) {
+                    bool swapped = false;
+                    if (arr[j].price > arr[j + 1].price) {
+                        Order memory temp = arr[j];
+                        arr[j] = arr[j + 1];
+                        arr[j + 1] = temp;
+                        swapped = true;
+                    }
+                    if (!swapped) {
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            for (uint i = 0; i < arr.length; i++) {
+                for (uint j = 0; j < arr.length - 1; j++) {
+                    bool swapped = false;
+                    if (arr[j].price < arr[j + 1].price) {
+                        Order memory temp = arr[j];
+                        arr[j] = arr[j + 1];
+                        arr[j + 1] = temp;
+                        swapped = true;
+                    }
+                    if (!swapped) {
+                        break;
+                    }
+                }
+            }   
+        }
     }
 }
  

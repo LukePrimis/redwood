@@ -90,4 +90,12 @@ contract Pool {
         IExc(dex).makeLimitOrder(token1T, totalToken, newPrice, IExc.Side.SELL);
         IExc(dex).makeLimitOrder(token1T, totalPine.div(newPrice), newPrice, IExc.Side.BUY);
     }
+    
+    function testing(uint testMe) public view returns (uint) {
+        if (testMe == 1) {
+            return 5;
+        } else {
+            return 3;
+        }
+    }
 }

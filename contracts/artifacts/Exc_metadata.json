@@ -7,6 +7,20 @@
 		"abi": [
 			{
 				"constant": false,
+				"inputs": [],
+				"name": "getzrx",
+				"outputs": [
+					{
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
 				"inputs": [
 					{
 						"name": "id",
@@ -26,6 +40,25 @@
 					{
 						"name": "",
 						"type": "bool"
+					}
+				],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"name": "ind",
+						"type": "uint256"
+					}
+				],
+				"name": "getmap",
+				"outputs": [
+					{
+						"name": "",
+						"type": "uint256[]"
 					}
 				],
 				"payable": false,
@@ -90,6 +123,24 @@
 				"type": "function"
 			},
 			{
+				"constant": false,
+				"inputs": [
+					{
+						"name": "ind",
+						"type": "uint256"
+					},
+					{
+						"name": "arr",
+						"type": "uint256[]"
+					}
+				],
+				"name": "setmap",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"constant": true,
 				"inputs": [
 					{
@@ -102,6 +153,29 @@
 					}
 				],
 				"name": "traderBalances",
+				"outputs": [
+					{
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [
+					{
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "testmap",
 				"outputs": [
 					{
 						"name": "",
@@ -400,6 +474,38 @@
 				],
 				"name": "NewTrade",
 				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"name": "trader",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"name": "ticker",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"name": "side",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"name": "price",
+						"type": "uint256"
+					}
+				],
+				"name": "NewLimitOrder",
+				"type": "event"
 			}
 		],
 		"devdoc": {
@@ -423,9 +529,9 @@
 	},
 	"sources": {
 		"contracts/Exc.sol": {
-			"keccak256": "0xe36bb5d877eb9e3d171bca86643ae9598b935235f0488d1990c8c645671ad97b",
+			"keccak256": "0x920e1d6f709cfa405a66d4ee8f9d04fe1371370f82fb88b16fe9b3725b37341e",
 			"urls": [
-				"bzzr://d593a88e07544cf737c35c8d1b0d851d83aa509a81e3e8a127abe7d6f4a45686"
+				"bzzr://015fe5b2891e4e71cfb24d49dc4050143e9c002984c748aa60ad6b6886875ce3"
 			]
 		},
 		"contracts/IExc.sol": {
