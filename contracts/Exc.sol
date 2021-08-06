@@ -96,11 +96,19 @@ contract Exc is IExc{
     // todo: implement deposit, which should deposit a certain amount of tokens from a trader to their on-exchange wallet,
     // based on the wallet data structure you create and the IERC20 interface methods. Namely, you should transfer
     // tokens from the account of the trader on that token to this smart contract, and credit them appropriately
+    event Deposit (
+        bytes32 ticker, 
+        address token, 
+        address trader, 
+        uint amount
+    );
+
     function deposit(
         uint amount,
         bytes32 ticker)
         external {
             Token memory tk = tokens[ticker];
+            emit Deposit(ticker, tk.tokenAddress, msg.sender, amount);
             IERC20(tk.tokenAddress).transferFrom(msg.sender, address(this), amount);
             traderBalances[msg.sender][ticker] = traderBalances[msg.sender][ticker].add(amount);
         }
@@ -149,13 +157,13 @@ contract Exc is IExc{
             nextOrderID++;
             orderbook[ticker][uint(side)].push(lmo);
             emit NewLimitOrder(msg.sender, ticker, uint(side), amount, price);
-            if (orderbook[ticker][uint(side)].length > 1 && side == Side.BUY) {
-                Order[] memory reversed = orderbook[ticker][uint(side)];
-                for (uint i = 0; i < reversed.length; i++) {
-                    orderbook[ticker][uint(side)][reversed.length - 1 - i] = reversed[i];
-                }
-            }
-            // quicksort(orderbook[ticker][uint(side)], uint(0), uint(orderbook[ticker][uint(side)].length - 1));
+            // if (orderbook[ticker][uint(side)].length > 1 && side == Side.BUY) {
+            //     Order[] memory reversed = orderbook[ticker][uint(side)];
+            //     for (uint i = 0; i < reversed.length; i++) {
+            //         orderbook[ticker][uint(side)][reversed.length - 1 - i] = reversed[i];
+            //     }
+            // }
+            bubblesort(orderbook[ticker][uint(side)]);
     }
     
     // todo: implement deleteLimitOrder, which will delete a limit order from the orderBook as long as the same trader is deleting
@@ -176,7 +184,6 @@ contract Exc is IExc{
                     }
                     orderbook[ticker][uint(side)].pop();
                     bubblesort(orderbook[ticker][uint(side)]);
-                    // orderbook[ticker][uint(side)] = quicksort(orderbook[ticker][uint(side)], 0, uint32(length - 1));
                     return true;
                 }
             }
@@ -375,38 +382,40 @@ contract Exc is IExc{
     // }
     
     function bubblesort(Order[] storage arr) internal {
-        Side side = arr[0].side;
-        if (side == Side.SELL) {
-            for (uint i = 0; i < arr.length; i++) {
-                for (uint j = 0; j < arr.length - 1; j++) {
-                    bool swapped = false;
-                    if (arr[j].price > arr[j + 1].price) {
-                        Order memory temp = arr[j];
-                        arr[j] = arr[j + 1];
-                        arr[j + 1] = temp;
-                        swapped = true;
-                    }
-                    if (!swapped) {
-                        break;
+        if (arr.length > 0) {
+            Side side = arr[0].side;
+            if (side == Side.SELL) {
+                for (uint i = 0; i < arr.length; i++) {
+                    for (uint j = 0; j < arr.length - 1; j++) {
+                        bool swapped = false;
+                        if (arr[j].price > arr[j + 1].price) {
+                            Order memory temp = arr[j];
+                            arr[j] = arr[j + 1];
+                            arr[j + 1] = temp;
+                            swapped = true;
+                        }
+                        if (!swapped) {
+                            break;
+                        }
                     }
                 }
             }
-        }
-        else {
-            for (uint i = 0; i < arr.length; i++) {
-                for (uint j = 0; j < arr.length - 1; j++) {
-                    bool swapped = false;
-                    if (arr[j].price < arr[j + 1].price) {
-                        Order memory temp = arr[j];
-                        arr[j] = arr[j + 1];
-                        arr[j + 1] = temp;
-                        swapped = true;
+            else {
+                for (uint i = 0; i < arr.length; i++) {
+                    for (uint j = 0; j < arr.length - 1; j++) {
+                        bool swapped = false;
+                        if (arr[j].price < arr[j + 1].price) {
+                            Order memory temp = arr[j];
+                            arr[j] = arr[j + 1];
+                            arr[j + 1] = temp;
+                            swapped = true;
+                        }
+                        if (!swapped) {
+                            break;
+                        }
                     }
-                    if (!swapped) {
-                        break;
-                    }
-                }
-            }   
+                }   
+            }
         }
     }
 }
