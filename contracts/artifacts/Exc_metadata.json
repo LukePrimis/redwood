@@ -213,6 +213,20 @@
 				"constant": false,
 				"inputs": [
 					{
+						"name": "side",
+						"type": "uint256"
+					}
+				],
+				"name": "testsort",
+				"outputs": [],
+				"payable": false,
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"constant": false,
+				"inputs": [
+					{
 						"name": "ticker",
 						"type": "bytes32"
 					},
@@ -506,6 +520,60 @@
 				],
 				"name": "NewLimitOrder",
 				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"name": "ticker",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"name": "trader",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "Deposit",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"name": "ticker",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"name": "side",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"name": "trader",
+						"type": "address"
+					}
+				],
+				"name": "MarketOrder",
+				"type": "event"
 			}
 		],
 		"devdoc": {
@@ -529,9 +597,9 @@
 	},
 	"sources": {
 		"contracts/Exc.sol": {
-			"keccak256": "0xf43d49a6e3a62befa7029f35f5e7b58c12ddd5339dddf43ac6a4f7abdac5b6df",
+			"keccak256": "0x25fd0e3df18b1032b13508328a5e0e656c3f1db477e9859b58de9ce30173605b",
 			"urls": [
-				"bzzr://0f655c43671fa521a527d0a5a53a4295ca3fe9954f6d4d5b7e4e61cc0d5415a4"
+				"bzzr://f871df3a0191113a50b95650be382f1557f3536c21fac74b58e2544bd29f516b"
 			]
 		},
 		"contracts/IExc.sol": {

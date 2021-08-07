@@ -22,6 +22,7 @@ contract Pool {
     
     uint private lastSellOrderID;
     uint private lastBuyOrderID;
+    bool private orderPlaced;
     
     // todo: create wallet data structures
     mapping(address => mapping(bytes32 => uint)) public traderBalances;
@@ -32,14 +33,17 @@ contract Pool {
     function initialize(address _token0, address _token1, address _dex, uint whichP, bytes32 _tickerQ, bytes32 _tickerT)
     external {
         tokenP = _token0;
-        token1 = token1;
-        dex = dex;
+        token1 = _token1;
+        dex = _dex;
         tokenPT = _tickerQ;
         token1T = _tickerT;
         totalPine = 0;
         totalToken = 0;
         lastSellOrderID = 0;
         lastBuyOrderID = 0;
+        orderPlaced = false;
+        IExc(dex).addToken(token1T, token1);
+        IExc(dex).addToken(tokenPT, tokenP);
     }
     
     // todo: implement wallet functionality and trading functionality
@@ -52,21 +56,33 @@ contract Pool {
     function deposit(uint tokenAmount, uint pineAmount) external {
         if (tokenAmount > 0) {
             IERC20(token1).transferFrom(msg.sender, address(this), tokenAmount);
+            IERC20(token1).approve(dex, tokenAmount);
             IExc(dex).deposit(tokenAmount, token1T);
             traderBalances[msg.sender][token1T] = traderBalances[msg.sender][token1T].add(tokenAmount);
             totalToken = totalToken.add(tokenAmount);
         }
         if (pineAmount > 0) {
             IERC20(tokenP).transferFrom(msg.sender, address(this), pineAmount);
+            IERC20(tokenP).approve(dex, pineAmount);
             IExc(dex).deposit(pineAmount, tokenPT);
             traderBalances[msg.sender][tokenPT] = traderBalances[msg.sender][tokenPT].add(pineAmount);
             totalPine = totalPine.add(pineAmount);
         }
-        IExc(dex).deleteLimitOrder(lastSellOrderID, token1T, IExc.Side.SELL);
-        IExc(dex).deleteLimitOrder(lastBuyOrderID, token1T, IExc.Side.BUY);
-        uint newPrice = totalPine.div(totalToken);
-        IExc(dex).makeLimitOrder(token1T, totalToken, newPrice, IExc.Side.SELL);
-        IExc(dex).makeLimitOrder(token1T, totalPine.div(newPrice), newPrice, IExc.Side.BUY);
+        if (orderPlaced) {
+            IExc(dex).deleteLimitOrder(lastSellOrderID, token1T, IExc.Side.SELL);
+            IExc(dex).deleteLimitOrder(lastBuyOrderID, token1T, IExc.Side.BUY);
+        }
+        uint newPrice = totalPine.div(totalToken > 0 ? totalToken : 1);
+        if (totalToken > 0) {
+            lastSellOrderID = IExc(dex).getNextOrderID();
+            IExc(dex).makeLimitOrder(token1T, totalToken, newPrice, IExc.Side.SELL);
+            orderPlaced = true;
+        } 
+        if (totalPine > 0) {
+            lastBuyOrderID = IExc(dex).getNextOrderID();
+            IExc(dex).makeLimitOrder(token1T, totalPine.div(newPrice), newPrice, IExc.Side.BUY);
+            orderPlaced = true;
+        }
     }
 
     function withdraw(uint tokenAmount, uint pineAmount) external{
@@ -84,11 +100,21 @@ contract Pool {
             traderBalances[msg.sender][token1T] = traderBalances[msg.sender][token1T].sub(tokenAmount);
             totalToken = totalToken.sub(tokenAmount);
         } 
-        IExc(dex).deleteLimitOrder(lastSellOrderID, token1T, IExc.Side.SELL);
-        IExc(dex).deleteLimitOrder(lastBuyOrderID, token1T, IExc.Side.BUY);
-        uint newPrice = totalPine.div(totalToken);
-        IExc(dex).makeLimitOrder(token1T, totalToken, newPrice, IExc.Side.SELL);
-        IExc(dex).makeLimitOrder(token1T, totalPine.div(newPrice), newPrice, IExc.Side.BUY);
+        if (orderPlaced) {
+            IExc(dex).deleteLimitOrder(lastSellOrderID, token1T, IExc.Side.SELL);
+            IExc(dex).deleteLimitOrder(lastBuyOrderID, token1T, IExc.Side.BUY);
+        }
+        uint newPrice = totalPine.div(totalToken > 0 ? totalToken : 1);
+        if (totalToken > 0) {
+            lastSellOrderID = IExc(dex).getNextOrderID();
+            IExc(dex).makeLimitOrder(token1T, totalToken, newPrice, IExc.Side.SELL);
+            orderPlaced = true;
+        } 
+        if (totalPine > 0) {
+            lastBuyOrderID = IExc(dex).getNextOrderID();
+            IExc(dex).makeLimitOrder(token1T, totalPine.div(newPrice), newPrice, IExc.Side.BUY);
+            orderPlaced = true;
+        }
     }
     
     function testing(uint testMe) public view returns (uint) {

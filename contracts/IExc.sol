@@ -70,4 +70,6 @@ interface IExc {
         uint amount,
         Side side)
         external;
+    
+    function getNextOrderID() external view returns (uint);
 }
